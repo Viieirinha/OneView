@@ -1,17 +1,22 @@
-// frontend/src/App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './Login';
 import Dashboard from './Dashboard';
-import Administracao from './Administracao'; // <--- A Nova Central
-import GestaoUsuarios from './GestaoUsuarios'; // Mantemos para acesso direto se necessário
-import Relatorios from './Relatorios'; // Mantemos para acesso direto se necessário
+import Administracao from './Administracao';
+import GestaoUsuarios from './GestaoUsuarios';
+import Relatorios from './Relatorios';
+import PrimeiroAcesso from './PrimeiroAcesso'; // <--- IMPORTANTE: Importar o novo ecrã
 import RotaProtegida from './RotaProtegida';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Rota Pública (Login) */}
         <Route path="/" element={<Login />} />
+        
+        {/* --- ROTAS PROTEGIDAS (Exigem Login) --- */}
+
+        {/* Dashboard Principal */}
         <Route 
           path="/dashboard" 
           element={
@@ -20,6 +25,18 @@ export default function App() {
             </RotaProtegida>
           } 
         />
+        
+        {/* Rota Obrigatória para quem tem a palavra-passe padrão */}
+        <Route 
+          path="/primeiro-acesso" 
+          element={
+            <RotaProtegida>
+              <PrimeiroAcesso />
+            </RotaProtegida>
+          } 
+        />
+        
+        {/* Central de Administração */}
         <Route 
           path="/administracao" 
           element={
@@ -28,6 +45,8 @@ export default function App() {
             </RotaProtegida>
           } 
         />
+
+        {/* Rotas Individuais (para acesso direto se necessário) */}
         <Route 
           path="/usuarios" 
           element={
@@ -36,6 +55,7 @@ export default function App() {
             </RotaProtegida>
           } 
         />
+
         <Route 
           path="/relatorios" 
           element={

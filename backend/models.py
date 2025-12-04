@@ -1,13 +1,15 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean # <--- ADICIONE Boolean
 from database import Base
 
 class Usuario(Base):
     __tablename__ = "usuarios"
+
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     nome = Column(String)
     senha_hash = Column(String)
-    cargo = Column(String) # Ex: "comercial", "financeiro", "admin"
+    cargo = Column(String)
+    primeiro_acesso = Column(Boolean, default=True)
 
 class Relatorio(Base):
     __tablename__ = "relatorios"

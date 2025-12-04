@@ -11,7 +11,6 @@ from jose import JWTError, jwt
 import models
 from database import engine, get_db
 
-# --- CONFIGURAÇÕES ---
 SECRET_KEY = "sua_chave_secreta_super_poderosa"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -29,7 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- MODELOS (SCHEMAS) ---
+# --- SCHEMAS ---
 class LoginData(BaseModel):
     email: str
     password: str
@@ -40,20 +39,20 @@ class UsuarioCriar(BaseModel):
     password: str
     cargo: str = "visitante"
 
-class UsuarioUpdate(BaseModel):
-    email: Optional[str] = None
-    nome: Optional[str] = None
-    password: Optional[str] = None
-    cargo: Optional[str] = None
+# Schema para troca de senha
+class TrocarSenhaSchema(BaseModel):
+    nova_senha: str
 
 class UsuarioDisplay(BaseModel):
     id: int
     email: str
     nome: str
     cargo: str
+    primeiro_acesso: bool # <--- Novo campo no display
     class Config:
         orm_mode = True
 
+# ... (Outros schemas: Relatorio, Permissao, Chamado - MANTENHA IGUAIS) ...
 class RelatorioSchema(BaseModel):
     titulo: str
     url: str
@@ -84,7 +83,7 @@ class ChamadoDisplay(BaseModel):
     autor_email: str
     data_criacao: str
     relatorio_id: Optional[int] = None
-    tecnico: Optional[str] = None # Novo campo
+    tecnico: Optional[str] = None
     class Config:
         orm_mode = True
 
@@ -99,41 +98,30 @@ def criar_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def get_usuario_atual(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Credenciais inválidas",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
+        if email is None: raise HTTPException(status_code=401)
     except JWTError:
-        raise credentials_exception
+        raise HTTPException(status_code=401)
     usuario = db.query(models.Usuario).filter(models.Usuario.email == email).first()
-    if usuario is None:
-        raise credentials_exception
+    if usuario is None: raise HTTPException(status_code=401)
     return usuario
 
 # --- ROTAS ---
 
-@app.get("/")
-def read_root():
-    return {"message": "API OneView V3 (Correção Login) 🚀"}
-
 @app.post("/setup-inicial")
 def setup_inicial(db: Session = Depends(get_db)):
-    usuario = db.query(models.Usuario).filter(models.Usuario.email == "admin@oneview.com").first()
-    if usuario: return {"mensagem": "Admin já existe"}
-    novo = models.Usuario(email="admin@oneview.com", nome="Admin", senha_hash=criar_hash_senha("123456"), cargo="admin")
-    db.add(novo)
-    db.commit()
-    return {"mensagem": "Admin criado"}
+    if not db.query(models.Usuario).filter(models.Usuario.email == "admin@oneview.com").first():
+        # Admin já nasce com primeiro_acesso=False pois você já sabe a senha
+        novo = models.Usuario(email="admin@oneview.com", nome="Admin", senha_hash=criar_hash_senha("123456"), cargo="admin", primeiro_acesso=False)
+        db.add(novo)
+        db.commit()
+        return {"mensagem": "Admin criado"}
+    return {"mensagem": "Admin já existe"}
 
 @app.post("/login")
 def login(data: LoginData, db: Session = Depends(get_db)):
@@ -143,20 +131,29 @@ def login(data: LoginData, db: Session = Depends(get_db)):
     
     token = criar_token(data={"sub": user.email})
     
-    # CORREÇÃO AQUI: Devolvendo as permissões para o frontend saber quem é
     return {
         "status": "sucesso", 
         "usuario": user.nome, 
         "token": token,
-        "permissoes": [user.cargo] 
+        "permissoes": [user.cargo],
+        "primeiro_acesso": user.primeiro_acesso # <--- ENVIA O STATUS
     }
 
-# --- CRUD USUÁRIOS ---
+@app.post("/trocar-senha-inicial")
+def trocar_senha_inicial(dados: TrocarSenhaSchema, db: Session = Depends(get_db), user: models.Usuario = Depends(get_usuario_atual)):
+    user.senha_hash = criar_hash_senha(dados.nova_senha)
+    user.primeiro_acesso = False
+    
+    db.commit()
+    return {"mensagem": "Senha atualizada com sucesso"}
+
 
 @app.post("/usuarios", response_model=UsuarioDisplay)
 def criar_usuario(usuario: UsuarioCriar, db: Session = Depends(get_db), current_user: models.Usuario = Depends(get_usuario_atual)):
     if db.query(models.Usuario).filter(models.Usuario.email == usuario.email).first():
         raise HTTPException(status_code=400, detail="Email já existe")
+    
+
     novo = models.Usuario(email=usuario.email, nome=usuario.nome, senha_hash=criar_hash_senha(usuario.password), cargo=usuario.cargo)
     db.add(novo)
     db.commit()
@@ -167,38 +164,20 @@ def criar_usuario(usuario: UsuarioCriar, db: Session = Depends(get_db), current_
 def listar_usuarios(db: Session = Depends(get_db), current_user: models.Usuario = Depends(get_usuario_atual)):
     return db.query(models.Usuario).all()
 
-@app.put("/usuarios/{id}", response_model=UsuarioDisplay)
-def atualizar_usuario(id: int, dados: UsuarioUpdate, db: Session = Depends(get_db), current_user: models.Usuario = Depends(get_usuario_atual)):
-    usuario = db.query(models.Usuario).filter(models.Usuario.id == id).first()
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
-    
-    if dados.nome: usuario.nome = dados.nome
-    if dados.email: usuario.email = dados.email
-    if dados.cargo: usuario.cargo = dados.cargo
-    if dados.password: usuario.senha_hash = criar_hash_senha(dados.password)
-    
-    db.commit()
-    db.refresh(usuario)
-    return usuario
-
 @app.delete("/usuarios/{id}")
 def deletar_usuario(id: int, db: Session = Depends(get_db), current_user: models.Usuario = Depends(get_usuario_atual)):
     usuario = db.query(models.Usuario).filter(models.Usuario.id == id).first()
-    if not usuario: raise HTTPException(404, "Não encontrado")
+    if not usuario: raise HTTPException(404)
     if usuario.email == "admin@oneview.com": raise HTTPException(400, "Não pode deletar Admin")
     db.delete(usuario)
     db.commit()
     return {"mensagem": "Deletado"}
 
-# --- CRUD RELATÓRIOS ---
+
 @app.post("/relatorios", response_model=RelatorioDisplay)
 def criar_relatorio(r: RelatorioSchema, db: Session = Depends(get_db), u=Depends(get_usuario_atual)):
     novo = models.Relatorio(titulo=r.titulo, url=r.url, categoria=r.categoria)
-    db.add(novo)
-    db.commit()
-    db.refresh(novo)
-    return novo
+    db.add(novo); db.commit(); db.refresh(novo); return novo
 
 @app.get("/relatorios", response_model=List[RelatorioDisplay])
 def listar_relatorios_admin(db: Session = Depends(get_db), u=Depends(get_usuario_atual)):
@@ -207,86 +186,49 @@ def listar_relatorios_admin(db: Session = Depends(get_db), u=Depends(get_usuario
 @app.delete("/relatorios/{id}")
 def deletar_relatorio(id: int, db: Session = Depends(get_db), u=Depends(get_usuario_atual)):
     r = db.query(models.Relatorio).filter(models.Relatorio.id == id).first()
-    if r:
-        db.query(models.Permissao).filter(models.Permissao.relatorio_id == id).delete()
-        db.delete(r)
-        db.commit()
+    if r: db.query(models.Permissao).filter(models.Permissao.relatorio_id == id).delete(); db.delete(r); db.commit()
     return {"mensagem": "Deletado"}
-
-# --- HIERARQUIA & PERMISSÕES ---
 
 @app.get("/meus-relatorios", response_model=List[RelatorioDisplay])
 def listar_meus_relatorios(db: Session = Depends(get_db), user: models.Usuario = Depends(get_usuario_atual)):
-    if user.cargo == "admin":
-        return db.query(models.Relatorio).all()
-    relatorios = db.query(models.Relatorio).join(models.Permissao).filter(models.Permissao.cargo == user.cargo).all()
-    return relatorios
+    if user.cargo == "admin": return db.query(models.Relatorio).all()
+    return db.query(models.Relatorio).join(models.Permissao).filter(models.Permissao.cargo == user.cargo).all()
 
 @app.post("/permissoes")
 def definir_permissao(p: PermissaoSchema, db: Session = Depends(get_db), u=Depends(get_usuario_atual)):
-    existe = db.query(models.Permissao).filter(models.Permissao.cargo == p.cargo, models.Permissao.relatorio_id == p.relatorio_id).first()
-    if not existe:
-        nova = models.Permissao(cargo=p.cargo, relatorio_id=p.relatorio_id)
-        db.add(nova)
-        db.commit()
-    return {"mensagem": "Permissão adicionada"}
+    if not db.query(models.Permissao).filter(models.Permissao.cargo == p.cargo, models.Permissao.relatorio_id == p.relatorio_id).first():
+        db.add(models.Permissao(cargo=p.cargo, relatorio_id=p.relatorio_id)); db.commit()
+    return {"mensagem": "Ok"}
 
 @app.delete("/permissoes/{cargo}/{relatorio_id}")
 def remover_permissao(cargo: str, relatorio_id: int, db: Session = Depends(get_db), u=Depends(get_usuario_atual)):
-    db.query(models.Permissao).filter(models.Permissao.cargo == cargo, models.Permissao.relatorio_id == relatorio_id).delete()
-    db.commit()
-    return {"mensagem": "Permissão removida"}
+    db.query(models.Permissao).filter(models.Permissao.cargo == cargo, models.Permissao.relatorio_id == relatorio_id).delete(); db.commit()
+    return {"mensagem": "Ok"}
 
 @app.get("/permissoes")
-def listar_permissoes(db: Session = Depends(get_db), u=Depends(get_usuario_atual)):
-    return db.query(models.Permissao).all()
-
-# --- CHAMADOS ---
+def listar_permissoes(db: Session = Depends(get_db), u=Depends(get_usuario_atual)): return db.query(models.Permissao).all()
 
 @app.post("/chamados", response_model=ChamadoDisplay)
 def criar_chamado(c: ChamadoCriar, db: Session = Depends(get_db), user: models.Usuario = Depends(get_usuario_atual)):
     hoje = datetime.now().strftime("%d/%m/%Y")
-    novo = models.Chamado(
-        titulo=c.titulo,
-        descricao=c.descricao,
-        autor_email=user.email,
-        status="aberto",
-        data_criacao=hoje,
-        relatorio_id=c.relatorio_id
-    )
-    db.add(novo)
-    db.commit()
-    db.refresh(novo)
-    return novo
+    novo = models.Chamado(titulo=c.titulo, descricao=c.descricao, autor_email=user.email, status="aberto", data_criacao=hoje, relatorio_id=c.relatorio_id)
+    db.add(novo); db.commit(); db.refresh(novo); return novo
 
 @app.get("/chamados", response_model=List[ChamadoDisplay])
 def listar_chamados(db: Session = Depends(get_db), user: models.Usuario = Depends(get_usuario_atual)):
-    if user.cargo == "admin":
-        return db.query(models.Chamado).all()
-    else:
-        return db.query(models.Chamado).filter(models.Chamado.autor_email == user.email).all()
+    if user.cargo == "admin": return db.query(models.Chamado).all()
+    return db.query(models.Chamado).filter(models.Chamado.autor_email == user.email).all()
 
 @app.put("/chamados/{id}/resolver")
 def resolver_chamado(id: int, db: Session = Depends(get_db), user: models.Usuario = Depends(get_usuario_atual)):
-    if user.cargo != "admin":
-        raise HTTPException(status_code=403, detail="Apenas admin")
-    chamado = db.query(models.Chamado).filter(models.Chamado.id == id).first()
-    if not chamado: raise HTTPException(404)
-    chamado.status = "resolvido"
-    db.commit()
+    if user.cargo != "admin": raise HTTPException(403)
+    c = db.query(models.Chamado).filter(models.Chamado.id == id).first()
+    if c: c.status = "resolvido"; db.commit()
     return {"mensagem": "Resolvido"}
 
-# NOVA ROTA: ATRIBUIR CHAMADO (Admin pega pra si)
 @app.put("/chamados/{id}/atribuir")
 def atribuir_chamado(id: int, db: Session = Depends(get_db), user: models.Usuario = Depends(get_usuario_atual)):
-    if user.cargo != "admin":
-        raise HTTPException(status_code=403, detail="Apenas admin pode atender chamados")
-    
-    chamado = db.query(models.Chamado).filter(models.Chamado.id == id).first()
-    if not chamado:
-        raise HTTPException(status_code=404, detail="Chamado não encontrado")
-    
-    chamado.tecnico = user.email # Salva o email do admin
-    chamado.status = "em_andamento" # Muda status automaticamente
-    db.commit()
-    return {"mensagem": "Chamado atribuído a você"}
+    if user.cargo != "admin": raise HTTPException(403)
+    c = db.query(models.Chamado).filter(models.Chamado.id == id).first()
+    if c: c.tecnico = user.email; c.status = "em_andamento"; db.commit()
+    return {"mensagem": "Atribuído"}
