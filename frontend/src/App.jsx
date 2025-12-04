@@ -1,5 +1,6 @@
-// frontend/src/App.jsx
+// Atualizando para Vercel
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+// ... resto do código ...
 import Login from './Login';
 import Dashboard from './Dashboard';
 import Relatorios from './Relatorios';
