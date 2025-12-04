@@ -2,9 +2,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './Login';
 import Dashboard from './Dashboard';
-import Usuarios from './GestaoUsuarios';
-import Relatorios from './Relatorios'; // <--- IMPORTAR
+import Relatorios from './Relatorios';
 import RotaProtegida from './RotaProtegida';
+
+// --- VERIFIQUE ESTA LINHA (Linha ~6) ---
+import GestaoUsuarios from './GestaoUsuarios'; 
+// (Não pode estar escrito "import Usuarios ...")
 
 export default function App() {
   return (
@@ -21,16 +24,17 @@ export default function App() {
           } 
         />
         
+        {/* --- VERIFIQUE ESTA ROTA (Linha ~28) --- */}
         <Route 
           path="/usuarios" 
           element={
             <RotaProtegida>
-              <Usuarios />
+              {/* Tem que estar chamando o componente novo */}
+              <GestaoUsuarios /> 
             </RotaProtegida>
           } 
         />
 
-        {/* <--- NOVA ROTA DE RELATÓRIOS ---> */}
         <Route 
           path="/relatorios" 
           element={
