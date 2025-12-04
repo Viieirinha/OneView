@@ -3,16 +3,15 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './Login';
 import Dashboard from './Dashboard';
 import Usuarios from './Usuarios';
-import RotaProtegida from './RotaProtegida'; // <--- 1. Importe o segurança
+import Relatorios from './Relatorios'; // <--- IMPORTAR
+import RotaProtegida from './RotaProtegida';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rota Pública (Qualquer um acessa) */}
         <Route path="/" element={<Login />} />
-
-        {/* Rotas Protegidas (O Segurança vigia) */}
+        
         <Route 
           path="/dashboard" 
           element={
@@ -30,6 +29,17 @@ export default function App() {
             </RotaProtegida>
           } 
         />
+
+        {/* <--- NOVA ROTA DE RELATÓRIOS ---> */}
+        <Route 
+          path="/relatorios" 
+          element={
+            <RotaProtegida>
+              <Relatorios />
+            </RotaProtegida>
+          } 
+        />
+
       </Routes>
     </BrowserRouter>
   );

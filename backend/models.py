@@ -8,5 +8,14 @@ class Usuario(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     nome = Column(String)
-    senha_hash = Column(String) # Nunca salvamos a senha real, só o hash!
-    cargo = Column(String, default="usuario") # admin, gerente, usuario
+    senha_hash = Column(String)
+    cargo = Column(String, default="usuario")
+
+# --- NOVO: Tabela de Relatórios ---
+class Relatorio(Base):
+    __tablename__ = "relatorios"
+
+    id = Column(Integer, primary_key=True, index=True)
+    titulo = Column(String)         # Ex: "Comercial"
+    url = Column(String)            # Ex: "https://app.powerbi.com/..."
+    categoria = Column(String)      # Ex: "Relatórios", "Administrativo"
