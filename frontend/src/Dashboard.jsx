@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FileText, Users, Settings, BarChart3, LogOut, Menu, X, ChevronRight, Database, Layout } from 'lucide-react';
+import { baseURL } from './api'; // <--- Importando a inteligência
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const usuarioLogado = localStorage.getItem('usuarioLogado') || 'Visitante';
-  const token = localStorage.getItem('token'); // <--- PEGA O TOKEN
+  const token = localStorage.getItem('token');
   
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
   const [totalUsuarios, setTotalUsuarios] = useState(0);
@@ -14,24 +15,21 @@ export default function Dashboard() {
   const [relatorioAtual, setRelatorioAtual] = useState({ titulo: 'Carregando...', url: '' });
 
   useEffect(() => {
-    // Se não tiver token, chuta pro login
-    if (!token) {
-      navigate('/');
-      return;
-    }
+    if (!token) { navigate('/'); return; }
 
     const fetchDados = async () => {
       try {
-        // HEADER COM TOKEN
         const headers = { 'Authorization': `Bearer ${token}` };
 
-        const resUser = await fetch('http://127.0.0.1:8000/usuarios', { headers });
+        // Usa baseURL
+        const resUser = await fetch(`${baseURL}/usuarios`, { headers });
         if (resUser.ok) {
           const dataUser = await resUser.json();
           setTotalUsuarios(dataUser.length);
         }
 
-        const resRel = await fetch('http://127.0.0.1:8000/relatorios', { headers });
+        // Usa baseURL
+        const resRel = await fetch(`${baseURL}/relatorios`, { headers });
         if (resRel.ok) {
           const dataRel = await resRel.json();
           setRelatorios(dataRel);
@@ -67,10 +65,7 @@ export default function Dashboard() {
       {sidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
       <aside className={`fixed md:static inset-y-0 left-0 z-30 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${sidebarOpen ? 'md:w-64' : 'md:w-20'}`}>
         <div className={`h-16 flex items-center border-b border-gray-100 transition-all ${justifyClass}`}>
-          <div className="text-2xl font-bold text-brand-blue flex items-center gap-2">
-             <div className="w-8 h-8 min-w-[32px] bg-brand-orange rounded flex items-center justify-center text-white text-xs shadow-sm">BI</div>
-             <span className={hideWhenCollapsed}>OneView</span>
-          </div>
+          <div className="text-2xl font-bold text-brand-blue flex items-center gap-2"><div className="w-8 h-8 min-w-[32px] bg-brand-orange rounded flex items-center justify-center text-white text-xs shadow-sm">BI</div><span className={hideWhenCollapsed}>OneView</span></div>
           <button onClick={() => setSidebarOpen(false)} className="md:hidden ml-auto text-gray-500"><X size={24} /></button>
         </div>
         <nav className="flex-1 overflow-y-auto py-4 scrollbar-hide">
@@ -83,9 +78,7 @@ export default function Dashboard() {
           <div className="mb-6 space-y-1">
             {relatorios.map((relatorio) => (
               <button key={relatorio.id} onClick={() => selecionarRelatorio(relatorio.titulo, relatorio.url)} className={`w-full flex items-center py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-blue group transition-colors ${justifyClass} ${relatorioAtual.titulo === relatorio.titulo ? 'bg-blue-50 text-brand-blue' : ''}`} title={relatorio.titulo}>
-                <div className={`w-2 h-2 min-w-[8px] rounded-full group-hover:bg-brand-blue ${relatorioAtual.titulo === relatorio.titulo ? 'bg-brand-blue' : 'bg-gray-300'}`}></div>
-                <span className={`ml-3 flex-1 text-left ${hideWhenCollapsed}`}>{relatorio.titulo}</span>
-                <ChevronRight size={14} className={`text-gray-300 group-hover:text-brand-blue ${hideWhenCollapsed}`} />
+                <div className={`w-2 h-2 min-w-[8px] rounded-full group-hover:bg-brand-blue ${relatorioAtual.titulo === relatorio.titulo ? 'bg-brand-blue' : 'bg-gray-300'}`}></div><span className={`ml-3 flex-1 text-left ${hideWhenCollapsed}`}>{relatorio.titulo}</span><ChevronRight size={14} className={`text-gray-300 group-hover:text-brand-blue ${hideWhenCollapsed}`} />
               </button>
             ))}
             {relatorios.length === 0 && <p className={`text-xs text-gray-400 italic ${justifyClass}`}>Sem relatórios</p>}
@@ -98,8 +91,7 @@ export default function Dashboard() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
         <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 md:px-8 z-10 border-b border-gray-200">
           <div className="flex items-center text-gray-500 text-sm">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-4 text-gray-600 p-2 rounded hover:bg-gray-100 focus:outline-none"><Menu size={24} /></button>
-            <LayoutDashboard size={16} className="mr-2 text-brand-blue" /><span className="mx-2 text-gray-300">/</span><span className="font-medium text-gray-800">Home</span>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-4 text-gray-600 p-2 rounded hover:bg-gray-100 focus:outline-none"><Menu size={24} /></button><LayoutDashboard size={16} className="mr-2 text-brand-blue" /><span className="mx-2 text-gray-300">/</span><span className="font-medium text-gray-800">Home</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right hidden md:block"><p className="text-sm font-bold text-gray-700">{usuarioLogado}</p><p className="text-xs text-gray-500">Administrador</p></div>

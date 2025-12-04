@@ -2,15 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, UserPlus, ArrowLeft, Users as UsersIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { baseURL } from './api'; // <--- Importando a inteligência
 
 export default function Usuarios() {
   const navigate = useNavigate();
-  const token = localStorage.getItem('token'); // Pega o token
+  const token = localStorage.getItem('token');
   const [usuarios, setUsuarios] = useState([]);
   const [form, setForm] = useState({ nome: '', email: '', password: '' });
   const [erro, setErro] = useState('');
 
-  // HEADER PADRÃO COM TOKEN
   const authHeaders = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
@@ -18,7 +18,7 @@ export default function Usuarios() {
 
   const buscarUsuarios = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/usuarios', { headers: authHeaders });
+      const response = await fetch(`${baseURL}/usuarios`, { headers: authHeaders });
       if (response.ok) {
         const data = await response.json();
         setUsuarios(data);
@@ -37,7 +37,7 @@ export default function Usuarios() {
     e.preventDefault();
     setErro('');
     try {
-      const response = await fetch('http://127.0.0.1:8000/usuarios', {
+      const response = await fetch(`${baseURL}/usuarios`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify(form),
@@ -59,7 +59,7 @@ export default function Usuarios() {
   const handleDelete = async (id, nome) => {
     if (!window.confirm(`Tem certeza que deseja excluir ${nome}?`)) return;
     try {
-      const response = await fetch(`http://127.0.0.1:8000/usuarios/${id}`, {
+      const response = await fetch(`${baseURL}/usuarios/${id}`, {
         method: 'DELETE',
         headers: authHeaders,
       });

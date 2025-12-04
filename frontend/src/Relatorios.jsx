@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, PlusCircle, ArrowLeft, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { baseURL } from './api'; // <--- Importando a inteligência
 
 export default function Relatorios() {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ export default function Relatorios() {
 
   const buscarRelatorios = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/relatorios', { headers: authHeaders });
+      const response = await fetch(`${baseURL}/relatorios`, { headers: authHeaders });
       if (response.ok) {
         const data = await response.json();
         setRelatorios(data);
@@ -36,7 +37,7 @@ export default function Relatorios() {
     e.preventDefault();
     setErro('');
     try {
-      const response = await fetch('http://127.0.0.1:8000/relatorios', {
+      const response = await fetch(`${baseURL}/relatorios`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify(form),
@@ -57,7 +58,7 @@ export default function Relatorios() {
   const handleDelete = async (id, titulo) => {
     if (!window.confirm(`Excluir "${titulo}"?`)) return;
     try {
-      const response = await fetch(`http://127.0.0.1:8000/relatorios/${id}`, {
+      const response = await fetch(`${baseURL}/relatorios/${id}`, {
         method: 'DELETE',
         headers: authHeaders,
       });
