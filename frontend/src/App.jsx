@@ -4,10 +4,7 @@ import Login from './Login';
 import Dashboard from './Dashboard';
 import Relatorios from './Relatorios';
 import RotaProtegida from './RotaProtegida';
-
-// --- VERIFIQUE ESTA LINHA (Linha ~6) ---
 import GestaoUsuarios from './GestaoUsuarios'; 
-// (Não pode estar escrito "import Usuarios ...")
 
 export default function App() {
   return (
@@ -24,13 +21,12 @@ export default function App() {
           } 
         />
         
-        {/* --- VERIFIQUE ESTA ROTA (Linha ~28) --- */}
+        {/* Rota de Usuários usando o componente novo */}
         <Route 
           path="/usuarios" 
           element={
             <RotaProtegida>
-              {/* Tem que estar chamando o componente novo */}
-              <GestaoUsuarios /> 
+              <GestaoUsuarios />
             </RotaProtegida>
           } 
         />
