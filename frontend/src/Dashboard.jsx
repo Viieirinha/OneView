@@ -2,17 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  Settings, 
-  BarChart3, 
-  LogOut, 
-  Menu, 
-  X, 
-  ChevronRight, 
-  Database, 
-  Layout 
+  LayoutDashboard, FileText, Users, Settings, BarChart3, LogOut, Menu, X, ChevronRight, Database, Layout, MessageSquare 
 } from 'lucide-react';
 import { baseURL } from './api';
 
@@ -20,11 +10,14 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const usuarioLogado = localStorage.getItem('usuarioLogado') || 'Visitante';
   const token = localStorage.getItem('token');
+  const cargoUsuario = localStorage.getItem('cargoUsuario');
   
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
   const [totalUsuarios, setTotalUsuarios] = useState(0);
   const [relatorios, setRelatorios] = useState([]);
   const [relatorioAtual, setRelatorioAtual] = useState({ titulo: 'Carregando...', url: '' });
+
+  const isAdmin = cargoUsuario === 'admin';
 
   useEffect(() => {
     if (!token) { navigate('/'); return; }
@@ -33,10 +26,12 @@ export default function Dashboard() {
       try {
         const headers = { 'Authorization': `Bearer ${token}` };
 
-        const resUser = await fetch(`${baseURL}/usuarios`, { headers });
-        if (resUser.ok) {
-          const dataUser = await resUser.json();
-          setTotalUsuarios(dataUser.length);
+        if (isAdmin) {
+            const resUser = await fetch(`${baseURL}/usuarios`, { headers });
+            if (resUser.ok) {
+            const dataUser = await resUser.json();
+            setTotalUsuarios(dataUser.length);
+            }
         }
 
         const resRel = await fetch(`${baseURL}/meus-relatorios`, { headers });
@@ -54,17 +49,22 @@ export default function Dashboard() {
       }
     };
     fetchDados();
-  }, [token, navigate]);
+  }, [token, navigate, isAdmin]);
 
   const handleLogout = () => {
     localStorage.removeItem('usuarioLogado');
     localStorage.removeItem('token');
+    localStorage.removeItem('cargoUsuario');
     navigate('/');
   };
 
   const selecionarRelatorio = (titulo, url) => {
     setRelatorioAtual({ titulo, url });
     if (window.innerWidth < 768) setSidebarOpen(false);
+  };
+
+  const irParaAdmin = (aba) => {
+    navigate('/administracao', { state: { aba: aba } });
   };
 
   const hideWhenCollapsed = `transition-all duration-300 ${!sidebarOpen ? 'md:w-0 md:opacity-0 md:overflow-hidden' : 'md:w-auto md:opacity-100'}`;
@@ -79,23 +79,29 @@ export default function Dashboard() {
           <button onClick={() => setSidebarOpen(false)} className="md:hidden ml-auto text-gray-500"><X size={24} /></button>
         </div>
         <nav className="flex-1 overflow-y-auto py-4 scrollbar-hide">
-          <div className={`mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider transition-all ${!sidebarOpen ? 'md:text-center md:text-[10px]' : 'px-6'}`}>{sidebarOpen ? 'Administrativo' : 'Adm'}</div>
-          <div className="mb-6">
+          <div className={`mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider transition-all ${!sidebarOpen ? 'md:text-center md:text-[10px]' : 'px-6'}`}>{sidebarOpen ? 'Admin' : 'Adm'}</div>
+          <div className="mb-6 space-y-1">
             
-            {/* --- CORREÇÃO AQUI: Link para /administracao --- */}
-            <button 
-              onClick={() => navigate('/administracao')}
-              className={`w-full flex items-center py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-blue group transition-colors ${justifyClass}`} 
-              title="Administração"
-            >
-              <Settings size={20} className="min-w-[20px] text-gray-400 group-hover:text-brand-blue" />
-              <span className={`ml-3 flex-1 text-left ${hideWhenCollapsed}`}>Administração</span>
+            {isAdmin && (
+                <>
+                    <button onClick={() => irParaAdmin('usuarios')} className={`w-full flex items-center py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-blue group transition-colors ${justifyClass}`} title="Administração">
+                    <Settings size={20} className="min-w-[20px] text-gray-400 group-hover:text-brand-blue" />
+                    <span className={`ml-3 flex-1 text-left ${hideWhenCollapsed}`}>Administração</span>
+                    <ChevronRight size={14} className={`text-gray-300 group-hover:text-brand-blue ${hideWhenCollapsed}`} />
+                    </button>
+
+                    <button className={`w-full flex items-center py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-blue group transition-colors ${justifyClass}`}><Database size={20} className="min-w-[20px] text-gray-400 group-hover:text-brand-blue" /><span className={`ml-3 flex-1 text-left ${hideWhenCollapsed}`}>Parâmetros</span><ChevronRight size={14} className={`text-gray-300 group-hover:text-brand-blue ${hideWhenCollapsed}`} />
+                    </button>
+                </>
+            )}
+
+            <button onClick={() => irParaAdmin('chamados')} className={`w-full flex items-center py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-blue group transition-colors ${justifyClass}`} title="Suporte">
+              <MessageSquare size={20} className="min-w-[20px] text-gray-400 group-hover:text-brand-blue" />
+              <span className={`ml-3 flex-1 text-left ${hideWhenCollapsed}`}>Suporte / Chamados</span>
               <ChevronRight size={14} className={`text-gray-300 group-hover:text-brand-blue ${hideWhenCollapsed}`} />
             </button>
-
-            <button className={`w-full flex items-center py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-blue group transition-colors ${justifyClass}`}><Database size={20} className="min-w-[20px] text-gray-400 group-hover:text-brand-blue" /><span className={`ml-3 flex-1 text-left ${hideWhenCollapsed}`}>Parâmetros</span><ChevronRight size={14} className={`text-gray-300 group-hover:text-brand-blue ${hideWhenCollapsed}`} />
-            </button>
           </div>
+
           <div className={`mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider transition-all ${!sidebarOpen ? 'md:text-center md:text-[10px]' : 'px-6'}`}>{sidebarOpen ? 'Relatórios' : 'Rel'}</div>
           <div className="mb-6 space-y-1">
             {relatorios.map((relatorio) => (
@@ -103,7 +109,7 @@ export default function Dashboard() {
                 <div className={`w-2 h-2 min-w-[8px] rounded-full group-hover:bg-brand-blue ${relatorioAtual.titulo === relatorio.titulo ? 'bg-brand-blue' : 'bg-gray-300'}`}></div><span className={`ml-3 flex-1 text-left ${hideWhenCollapsed}`}>{relatorio.titulo}</span><ChevronRight size={14} className={`text-gray-300 group-hover:text-brand-blue ${hideWhenCollapsed}`} />
               </button>
             ))}
-            {relatorios.length === 0 && <p className={`text-xs text-gray-400 italic ${justifyClass}`}>Sem relatórios disponíveis</p>}
+            {relatorios.length === 0 && <p className={`text-xs text-gray-400 italic ${justifyClass}`}>Sem relatórios</p>}
           </div>
         </nav>
         <div className={`p-4 border-t border-gray-100 ${!sidebarOpen ? 'flex justify-center' : ''}`}>
@@ -116,31 +122,51 @@ export default function Dashboard() {
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-4 text-gray-600 p-2 rounded hover:bg-gray-100 focus:outline-none"><Menu size={24} /></button><LayoutDashboard size={16} className="mr-2 text-brand-blue" /><span className="mx-2 text-gray-300">/</span><span className="font-medium text-gray-800">Home</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-right hidden md:block"><p className="text-sm font-bold text-gray-700">{usuarioLogado}</p><p className="text-xs text-gray-500">Administrador</p></div>
+            <div className="text-right hidden md:block"><p className="text-sm font-bold text-gray-700">{usuarioLogado}</p><p className="text-xs text-gray-500">{cargoUsuario === 'admin' ? 'Administrador' : cargoUsuario.toUpperCase()}</p></div>
             <div className="w-10 h-10 rounded-full bg-gray-100 border-2 border-white shadow-sm overflow-hidden"><img src={`https://ui-avatars.com/api/?name=${usuarioLogado}&background=0D8ABC&color=fff`} alt="Avatar" /></div>
           </div>
         </header>
         <div className="flex-1 overflow-auto p-4 md:p-8">
           <div className="mb-8"><h1 className="text-2xl font-light text-gray-800">Olá, <span className="font-semibold">{usuarioLogado}</span></h1></div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center hover:shadow-md transition-shadow">
               <div className="p-3 rounded-lg bg-green-50 text-green-600 mr-4"><BarChart3 size={24} /></div><div><h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider">Conjunto de Dados</h3><p className="text-2xl font-bold text-gray-700 mt-1">102</p></div>
             </div>
             
-            {/* CORREÇÃO AQUI: Link para /administracao */}
-            <div onClick={() => navigate('/administracao')} className="cursor-pointer bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center hover:shadow-md transition-shadow hover:border-purple-500 group">
-              <div className="p-3 rounded-lg bg-purple-50 text-purple-600 mr-4 group-hover:bg-purple-600 group-hover:text-white transition-colors"><FileText size={24} /></div><div><h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider">Relatórios</h3><p className="text-2xl font-bold text-gray-700 mt-1">{relatorios.length}</p></div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center hover:shadow-md transition-shadow">
-              <div className="p-3 rounded-lg bg-blue-50 text-brand-blue mr-4"><Layout size={24} /></div><div><h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider">Grupos</h3><p className="text-2xl font-bold text-gray-700 mt-1">7</p></div>
-            </div>
-             
-             {/* CORREÇÃO AQUI: Link para /administracao */}
-             <div onClick={() => navigate('/administracao')} className="cursor-pointer bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center hover:shadow-md transition-shadow hover:border-brand-orange group">
-              <div className="p-3 rounded-lg bg-orange-50 text-brand-orange mr-4 group-hover:bg-brand-orange group-hover:text-white transition-colors"><Users size={24} /></div><div><h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider">Usuários</h3><p className="text-2xl font-bold text-gray-700 mt-1">{totalUsuarios}</p></div>
-            </div>
+            {/* CARDS APENAS PARA ADMIN - AGORA SEM CLIQUE */}
+            {isAdmin && (
+                <>
+                    {/* Card Relatórios (Sem onClick, sem cursor-pointer, sem hover color) */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+                        <div className="p-3 rounded-lg bg-purple-50 text-purple-600 mr-4">
+                            <FileText size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider">Relatórios</h3>
+                            <p className="text-2xl font-bold text-gray-700 mt-1">{relatorios.length}</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+                        <div className="p-3 rounded-lg bg-blue-50 text-brand-blue mr-4"><Layout size={24} /></div>
+                        <div><h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider">Grupos</h3><p className="text-2xl font-bold text-gray-700 mt-1">7</p></div>
+                    </div>
+
+                    {/* Card Usuários (Sem onClick, sem cursor-pointer, sem hover color) */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+                        <div className="p-3 rounded-lg bg-orange-50 text-brand-orange mr-4">
+                            <Users size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider">Usuários</h3>
+                            <p className="text-2xl font-bold text-gray-700 mt-1">{totalUsuarios}</p>
+                        </div>
+                    </div>
+                </>
+            )}
           </div>
+
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-[600px] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50"><h3 className="font-bold text-gray-700 flex items-center gap-2"><span className="w-2 h-6 bg-brand-orange rounded-full block"></span>{relatorioAtual.titulo}</h3><button className="text-xs font-semibold text-brand-blue hover:text-brand-orange transition-colors">Expandir Tela</button></div>
             <div className="flex-1 bg-gray-100 relative">{relatorioAtual.url ? (<iframe title="Dashboard" src={relatorioAtual.url} className="w-full h-full absolute inset-0" frameBorder="0" allowFullScreen={true} />) : (<div className="flex items-center justify-center h-full text-gray-400">Selecione um relatório no menu</div>)}</div>

@@ -1,18 +1,39 @@
-import React, { useState } from 'react';
-import { Users, FileText, Shield, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import GestaoUsuarios from './GestaoUsuarios'; // Vamos reutilizar, mas precisa ajustar css
-import Relatorios from './Relatorios'; // Vamos reutilizar
+// frontend/src/Administracao.jsx
+import React, { useState, useEffect } from 'react';
+import { Users, FileText, Shield, ArrowLeft, MessageSquare } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import GestaoUsuarios from './GestaoUsuarios'; 
+import Relatorios from './Relatorios'; 
 import Hierarquia from './Hierarquia';
+import Chamados from './Chamados';
 
 export default function Administracao() {
   const navigate = useNavigate();
-  const [abaAtiva, setAbaAtiva] = useState('usuarios');
+  const location = useLocation();
+  const cargoUsuario = localStorage.getItem('cargoUsuario');
+  
+  // Se não for admin, começa em 'chamados'. Se for admin, começa em 'usuarios'.
+  const abaInicial = cargoUsuario === 'admin' ? 'usuarios' : 'chamados';
+  const [abaAtiva, setAbaAtiva] = useState(abaInicial);
+
+  const isAdmin = cargoUsuario === 'admin';
+
+  useEffect(() => {
+    // Se vier com uma aba na memória (do clique do dashboard), usa ela
+    if (location.state && location.state.aba) {
+      // MAS, se não for admin e tentar acessar coisa proibida, força chamados
+      if (!isAdmin && ['usuarios', 'relatorios', 'hierarquia'].includes(location.state.aba)) {
+        setAbaAtiva('chamados');
+      } else {
+        setAbaAtiva(location.state.aba);
+      }
+    }
+  }, [location, isAdmin]);
+
+  const btnClass = (nome) => `flex items-center gap-2 px-4 py-3 rounded-t-lg font-medium transition ${abaAtiva === nome ? 'bg-white text-brand-blue border-b-2 border-brand-blue shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-800">
-      
-      {/* Header */}
       <div className="max-w-6xl mx-auto mb-8 flex items-center gap-4">
         <button onClick={() => navigate('/dashboard')} className="p-2 bg-white rounded-full shadow hover:bg-gray-100 transition">
           <ArrowLeft size={20} className="text-gray-600" />
@@ -23,32 +44,33 @@ export default function Administracao() {
       <div className="max-w-6xl mx-auto">
         
         {/* Menu de Abas */}
-        <div className="flex flex-col md:flex-row gap-2 mb-6 border-b border-gray-200 pb-1">
-          <button 
-            onClick={() => setAbaAtiva('usuarios')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition ${abaAtiva === 'usuarios' ? 'bg-white text-brand-blue border-b-2 border-brand-blue shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
-          >
-            <Users size={18} /> Gestão de Usuários
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('relatorios')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition ${abaAtiva === 'relatorios' ? 'bg-white text-brand-blue border-b-2 border-brand-blue shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
-          >
-            <FileText size={18} /> Gestão de Relatórios
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('hierarquia')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition ${abaAtiva === 'hierarquia' ? 'bg-white text-brand-blue border-b-2 border-brand-blue shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
-          >
-            <Shield size={18} /> Hierarquia & Permissões
+        <div className="flex overflow-x-auto gap-2 mb-6 border-b border-gray-200 pb-1">
+          {/* ABAS RESTRITAS (Só Admin vê) */}
+          {isAdmin && (
+            <>
+                <button onClick={() => setAbaAtiva('usuarios')} className={btnClass('usuarios')}>
+                    <Users size={18} /> <span className="whitespace-nowrap">Usuários</span>
+                </button>
+                <button onClick={() => setAbaAtiva('relatorios')} className={btnClass('relatorios')}>
+                    <FileText size={18} /> <span className="whitespace-nowrap">Relatórios</span>
+                </button>
+                <button onClick={() => setAbaAtiva('hierarquia')} className={btnClass('hierarquia')}>
+                    <Shield size={18} /> <span className="whitespace-nowrap">Permissões</span>
+                </button>
+            </>
+          )}
+          
+          {/* ABA PÚBLICA */}
+          <button onClick={() => setAbaAtiva('chamados')} className={btnClass('chamados')}>
+            <MessageSquare size={18} /> <span className="whitespace-nowrap">Chamados</span>
           </button>
         </div>
 
-        {/* Conteúdo da Aba */}
         <div className="animate-fadeIn">
-          {abaAtiva === 'usuarios' && <GestaoUsuarios modoEmbutido={true} />}
-          {abaAtiva === 'relatorios' && <Relatorios modoEmbutido={true} />}
-          {abaAtiva === 'hierarquia' && <Hierarquia />}
+          {abaAtiva === 'usuarios' && isAdmin && <GestaoUsuarios modoEmbutido={true} />}
+          {abaAtiva === 'relatorios' && isAdmin && <Relatorios modoEmbutido={true} />}
+          {abaAtiva === 'hierarquia' && isAdmin && <Hierarquia />}
+          {abaAtiva === 'chamados' && <Chamados />}
         </div>
 
       </div>

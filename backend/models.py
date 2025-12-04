@@ -22,3 +22,17 @@ class Permissao(Base):
     id = Column(Integer, primary_key=True, index=True)
     cargo = Column(String) # O nome do cargo (ex: "financeiro")
     relatorio_id = Column(Integer, ForeignKey("relatorios.id"))
+
+class Chamado(Base):
+    __tablename__ = "chamados"
+
+    id = Column(Integer, primary_key=True, index=True)
+    titulo = Column(String)
+    descricao = Column(String)
+    status = Column(String, default="aberto") # aberto, em_andamento, resolvido
+    autor_email = Column(String)
+    data_criacao = Column(String)
+    relatorio_id = Column(Integer, ForeignKey("relatorios.id"), nullable=True)
+    
+    # NOVA COLUNA: Quem está atendendo esse chamado
+    tecnico = Column(String, nullable=True)

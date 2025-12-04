@@ -1,7 +1,7 @@
 // frontend/src/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { baseURL } from './api'; // <--- Importando a inteligência
+import { baseURL } from './api';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,7 +16,6 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // Usa baseURL em vez de http://127.0.0.1:8000
       const response = await fetch(`${baseURL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -28,6 +27,12 @@ export default function Login() {
       if (data.status === "sucesso") {
         localStorage.setItem('usuarioLogado', data.usuario);
         localStorage.setItem('token', data.token);
+        
+        // --- NOVA LINHA: SALVAR O CARGO ---
+        // O backend envia 'permissoes': ['admin'] ou ['comercial']
+        const cargo = data.permissoes && data.permissoes.length > 0 ? data.permissoes[0] : 'visitante';
+        localStorage.setItem('cargoUsuario', cargo); 
+
         navigate('/dashboard');
       } else {
         setErro(data.mensagem || 'Erro ao tentar fazer login');

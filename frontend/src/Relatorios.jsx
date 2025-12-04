@@ -71,10 +71,7 @@ export default function Relatorios({ modoEmbutido }) {
   };
 
   return (
-    // AJUSTE 1: Remove padding e altura mínima se estiver embutido
     <div className={modoEmbutido ? "" : "min-h-screen bg-gray-50 p-8 font-sans text-gray-800"}>
-      
-      {/* AJUSTE 2: Esconde o cabeçalho se estiver dentro da aba (já tem o título lá) */}
       {!modoEmbutido && (
         <div className="max-w-4xl mx-auto mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -89,10 +86,8 @@ export default function Relatorios({ modoEmbutido }) {
         </div>
       )}
 
-      {/* AJUSTE 3: Centraliza (max-w-4xl) apenas se estiver sozinho. Se for embutido, usa 100% da largura da aba */}
       <div className={`grid grid-cols-1 md:grid-cols-3 gap-8 ${!modoEmbutido ? 'max-w-4xl mx-auto' : ''}`}>
         
-        {/* Formulário (Esquerda) */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 h-fit">
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-blue-600">
             <PlusCircle size={20} />
