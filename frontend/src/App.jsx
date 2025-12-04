@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './Login';
 import Dashboard from './Dashboard';
-import Usuarios from './usuarios';
+import Usuarios from './GestaoUsuarios';
 import Relatorios from './Relatorios'; // <--- IMPORTAR
 import RotaProtegida from './RotaProtegida';
 
