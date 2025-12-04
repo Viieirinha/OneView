@@ -1,18 +1,17 @@
-// Atualizando para Vercel
+// frontend/src/App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-// ... resto do código ...
 import Login from './Login';
 import Dashboard from './Dashboard';
-import Relatorios from './Relatorios';
+import Administracao from './Administracao'; // <--- A Nova Central
+import GestaoUsuarios from './GestaoUsuarios'; // Mantemos para acesso direto se necessário
+import Relatorios from './Relatorios'; // Mantemos para acesso direto se necessário
 import RotaProtegida from './RotaProtegida';
-import GestaoUsuarios from './GestaoUsuarios'; 
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
-        
         <Route 
           path="/dashboard" 
           element={
@@ -21,8 +20,14 @@ export default function App() {
             </RotaProtegida>
           } 
         />
-        
-        {/* Rota de Usuários usando o componente novo */}
+        <Route 
+          path="/administracao" 
+          element={
+            <RotaProtegida>
+              <Administracao />
+            </RotaProtegida>
+          } 
+        />
         <Route 
           path="/usuarios" 
           element={
@@ -31,7 +36,6 @@ export default function App() {
             </RotaProtegida>
           } 
         />
-
         <Route 
           path="/relatorios" 
           element={

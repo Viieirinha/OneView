@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, PlusCircle, ArrowLeft, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { baseURL } from './api'; // <--- Importando a inteligência
+import { baseURL } from './api';
 
-export default function Relatorios() {
+// Recebe modoEmbutido para saber se está dentro da Administração
+export default function Relatorios({ modoEmbutido }) {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const [relatorios, setRelatorios] = useState([]);
@@ -70,33 +71,86 @@ export default function Relatorios() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 font-sans text-gray-800">
-      <div className="max-w-4xl mx-auto mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/dashboard')} className="p-2 bg-white rounded-full shadow hover:bg-gray-100 transition"><ArrowLeft size={20} className="text-gray-600" /></button>
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><FileText className="text-brand-blue" />Gestão de Relatórios</h1>
+    // AJUSTE 1: Remove padding e altura mínima se estiver embutido
+    <div className={modoEmbutido ? "" : "min-h-screen bg-gray-50 p-8 font-sans text-gray-800"}>
+      
+      {/* AJUSTE 2: Esconde o cabeçalho se estiver dentro da aba (já tem o título lá) */}
+      {!modoEmbutido && (
+        <div className="max-w-4xl mx-auto mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={() => navigate('/dashboard')} className="p-2 bg-white rounded-full shadow hover:bg-gray-100 transition">
+              <ArrowLeft size={20} className="text-gray-600" />
+            </button>
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <FileText className="text-brand-blue" />
+              Gestão de Relatórios
+            </h1>
+          </div>
         </div>
-      </div>
-      <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+      )}
+
+      {/* AJUSTE 3: Centraliza (max-w-4xl) apenas se estiver sozinho. Se for embutido, usa 100% da largura da aba */}
+      <div className={`grid grid-cols-1 md:grid-cols-3 gap-8 ${!modoEmbutido ? 'max-w-4xl mx-auto' : ''}`}>
+        
+        {/* Formulário (Esquerda) */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 h-fit">
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-purple-600"><PlusCircle size={20} />Novo Relatório</h2>
+          <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-blue-600">
+            <PlusCircle size={20} />
+            Novo Relatório
+          </h2>
+          
           {erro && <p className="text-red-500 text-sm mb-3 bg-red-50 p-2 rounded">{erro}</p>}
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div><label className="block text-sm font-medium text-gray-600 mb-1">Título</label><input required type="text" className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ex: Comercial" value={form.titulo} onChange={e => setForm({...form, titulo: e.target.value})} /></div>
-            <div><label className="block text-sm font-medium text-gray-600 mb-1">Link Power BI</label><input required type="url" className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none" placeholder="https://..." value={form.url} onChange={e => setForm({...form, url: e.target.value})} /></div>
-            <button type="submit" className="w-full bg-purple-600 text-white font-bold py-2 rounded hover:bg-purple-700 transition flex items-center justify-center gap-2">Adicionar</button>
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Título do Dashboard</label>
+              <input required type="text" className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ex: Comercial" value={form.titulo} onChange={e => setForm({...form, titulo: e.target.value})} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Link Power BI</label>
+              <input required type="url" className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none" placeholder="https://..." value={form.url} onChange={e => setForm({...form, url: e.target.value})} />
+            </div>
+            <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition flex items-center justify-center gap-2">Adicionar</button>
           </form>
         </div>
+
         <div className="md:col-span-2 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <table className="w-full text-left">
-            <thead className="bg-gray-50 border-b border-gray-200"><tr><th className="p-4 text-xs font-bold text-gray-500 uppercase">Título</th><th className="p-4 text-xs font-bold text-gray-500 uppercase">Link</th><th className="p-4 text-xs font-bold text-gray-500 uppercase text-right">Ações</th></tr></thead>
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="p-4 text-xs font-bold text-gray-500 uppercase">Título</th>
+                <th className="p-4 text-xs font-bold text-gray-500 uppercase">Link</th>
+                <th className="p-4 text-xs font-bold text-gray-500 uppercase text-right">Ações</th>
+              </tr>
+            </thead>
             <tbody className="divide-y divide-gray-100">
               {relatorios.map((rel) => (
                 <tr key={rel.id} className="hover:bg-gray-50 transition">
-                  <td className="p-4 font-medium text-gray-700 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-purple-500"></div>{rel.titulo}</td><td className="p-4 text-gray-500 text-xs truncate max-w-[200px]">{rel.url}</td>
-                  <td className="p-4 text-right"><button onClick={() => handleDelete(rel.id, rel.titulo)} className="text-gray-400 hover:text-red-500 transition p-2 hover:bg-red-50 rounded-full"><Trash2 size={18} /></button></td>
+                  <td className="p-4 font-medium text-gray-700 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                    {rel.titulo}
+                  </td>
+                  <td className="p-4 text-gray-500 text-xs truncate max-w-[200px]">
+                    {rel.url}
+                  </td>
+                  <td className="p-4 text-right">
+                    <button 
+                      onClick={() => handleDelete(rel.id, rel.titulo)}
+                      className="text-gray-400 hover:text-red-500 transition p-2 hover:bg-red-50 rounded-full"
+                      title="Excluir"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
                 </tr>
               ))}
+              {relatorios.length === 0 && (
+                <tr>
+                  <td colSpan="3" className="p-8 text-center text-gray-400">
+                    Nenhum relatório cadastrado.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
