@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 # Tenta pegar a URL do banco das variáveis de ambiente (Nuvem)
 # Se não encontrar, usa o SQLite local (Computador)
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./oneview.db")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://neondb_owner:npg_ztAFmK8D7heV@ep-wispy-lab-acyijlq2-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
 
 # Ajuste necessário para o Render (ele às vezes dá o link com "postgres://" em vez de "postgresql://")
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
