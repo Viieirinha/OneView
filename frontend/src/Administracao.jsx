@@ -1,28 +1,25 @@
-// frontend/src/Administracao.jsx
 import React, { useState, useEffect } from 'react';
-import { Users, FileText, Shield, ArrowLeft, MessageSquare } from 'lucide-react';
+import { Users, FileText, Shield, ArrowLeft, MessageSquare, Activity } from 'lucide-react'; // Importe Activity
 import { useNavigate, useLocation } from 'react-router-dom';
 import GestaoUsuarios from './GestaoUsuarios'; 
 import Relatorios from './Relatorios'; 
 import Hierarquia from './Hierarquia';
 import Chamados from './Chamados';
+import Logs from './Logs'; // <--- IMPORTAR
 
 export default function Administracao() {
   const navigate = useNavigate();
   const location = useLocation();
   const cargoUsuario = localStorage.getItem('cargoUsuario');
   
-  // Se não for admin, começa em 'chamados'. Se for admin, começa em 'usuarios'.
   const abaInicial = cargoUsuario === 'admin' ? 'usuarios' : 'chamados';
   const [abaAtiva, setAbaAtiva] = useState(abaInicial);
 
   const isAdmin = cargoUsuario === 'admin';
 
   useEffect(() => {
-    // Se vier com uma aba na memória (do clique do dashboard), usa ela
     if (location.state && location.state.aba) {
-      // MAS, se não for admin e tentar acessar coisa proibida, força chamados
-      if (!isAdmin && ['usuarios', 'relatorios', 'hierarquia'].includes(location.state.aba)) {
+      if (!isAdmin && ['usuarios', 'relatorios', 'hierarquia', 'logs'].includes(location.state.aba)) {
         setAbaAtiva('chamados');
       } else {
         setAbaAtiva(location.state.aba);
@@ -42,10 +39,7 @@ export default function Administracao() {
       </div>
 
       <div className="max-w-6xl mx-auto">
-        
-        {/* Menu de Abas */}
         <div className="flex overflow-x-auto gap-2 mb-6 border-b border-gray-200 pb-1">
-          {/* ABAS RESTRITAS (Só Admin vê) */}
           {isAdmin && (
             <>
                 <button onClick={() => setAbaAtiva('usuarios')} className={btnClass('usuarios')}>
@@ -57,10 +51,12 @@ export default function Administracao() {
                 <button onClick={() => setAbaAtiva('hierarquia')} className={btnClass('hierarquia')}>
                     <Shield size={18} /> <span className="whitespace-nowrap">Permissões</span>
                 </button>
+                {/* ABA LOGS */}
+                <button onClick={() => setAbaAtiva('logs')} className={btnClass('logs')}>
+                    <Activity size={18} /> <span className="whitespace-nowrap">Auditoria</span>
+                </button>
             </>
           )}
-          
-          {/* ABA PÚBLICA */}
           <button onClick={() => setAbaAtiva('chamados')} className={btnClass('chamados')}>
             <MessageSquare size={18} /> <span className="whitespace-nowrap">Chamados</span>
           </button>
@@ -70,9 +66,9 @@ export default function Administracao() {
           {abaAtiva === 'usuarios' && isAdmin && <GestaoUsuarios modoEmbutido={true} />}
           {abaAtiva === 'relatorios' && isAdmin && <Relatorios modoEmbutido={true} />}
           {abaAtiva === 'hierarquia' && isAdmin && <Hierarquia />}
+          {abaAtiva === 'logs' && isAdmin && <Logs />} {/* COMPONENTE LOGS */}
           {abaAtiva === 'chamados' && <Chamados />}
         </div>
-
       </div>
     </div>
   );
