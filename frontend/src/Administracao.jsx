@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FileText, Shield, ArrowLeft, MessageSquare, Activity } from 'lucide-react'; // Importe Activity
+import { Users, FileText, Shield, ArrowLeft, MessageSquare, Activity } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import GestaoUsuarios from './GestaoUsuarios'; 
 import Relatorios from './Relatorios'; 
 import Hierarquia from './Hierarquia';
 import Chamados from './Chamados';
-import Logs from './Logs'; // <--- IMPORTAR
+import Logs from './Logs';
 
 export default function Administracao() {
   const navigate = useNavigate();
@@ -66,7 +66,7 @@ export default function Administracao() {
           {abaAtiva === 'usuarios' && isAdmin && <GestaoUsuarios modoEmbutido={true} />}
           {abaAtiva === 'relatorios' && isAdmin && <Relatorios modoEmbutido={true} />}
           {abaAtiva === 'hierarquia' && isAdmin && <Hierarquia />}
-          {abaAtiva === 'logs' && isAdmin && <Logs />} {/* COMPONENTE LOGS */}
+          {abaAtiva === 'logs' && isAdmin && <Logs />}
           {abaAtiva === 'chamados' && <Chamados />}
         </div>
       </div>

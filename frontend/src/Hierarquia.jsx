@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Save, Check, X } from 'lucide-react';
+import { Shield, Check, X } from 'lucide-react';
 import { baseURL } from './api';
 
 export default function Hierarquia() {
@@ -25,17 +25,15 @@ export default function Hierarquia() {
 
   const togglePermissao = async (relatorioId, temPermissao) => {
     if (temPermissao) {
-      // Remover
       await fetch(`${baseURL}/permissoes/${cargoSelecionado}/${relatorioId}`, { method: 'DELETE', headers: authHeaders });
     } else {
-      // Adicionar
       await fetch(`${baseURL}/permissoes`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({ cargo: cargoSelecionado, relatorio_id: relatorioId })
       });
     }
-    carregarDados(); // Recarrega para atualizar a tela
+    carregarDados();
   };
 
   return (
@@ -45,7 +43,6 @@ export default function Hierarquia() {
           <Shield className="text-brand-blue" /> Gestão de Hierarquia
         </h2>
         
-        {/* Seletor de Cargo */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-600">Configurar Cargo:</span>
           <select 
@@ -59,7 +56,7 @@ export default function Hierarquia() {
       </div>
 
       <p className="text-sm text-gray-500 mb-4">
-        Selecione abaixo quais relatórios o cargo <strong>{cargoSelecionado.toUpperCase()}</strong> pode acessar.
+        Selecione abaixo quais relatórios o cargo <strong>{cargoSelecionado.toUpperCase()}</strong> pode aceder.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -84,7 +81,7 @@ export default function Hierarquia() {
       
       {cargoSelecionado === 'admin' && (
         <p className="mt-6 text-xs text-orange-500 bg-orange-50 p-2 rounded">
-          * Nota: O Administrador sempre tem acesso a todos os relatórios, independente desta configuração.
+          * Nota: O Administrador tem sempre acesso a todos os relatórios, independentemente desta configuração.
         </p>
       )}
     </div>

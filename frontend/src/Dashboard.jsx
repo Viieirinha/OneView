@@ -1,4 +1,3 @@
-// frontend/src/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -109,7 +108,7 @@ export default function Dashboard() {
                 <div className={`w-2 h-2 min-w-[8px] rounded-full group-hover:bg-brand-blue ${relatorioAtual.titulo === relatorio.titulo ? 'bg-brand-blue' : 'bg-gray-300'}`}></div><span className={`ml-3 flex-1 text-left ${hideWhenCollapsed}`}>{relatorio.titulo}</span><ChevronRight size={14} className={`text-gray-300 group-hover:text-brand-blue ${hideWhenCollapsed}`} />
               </button>
             ))}
-            {relatorios.length === 0 && <p className={`text-xs text-gray-400 italic ${justifyClass}`}>Sem relatórios</p>}
+            {relatorios.length === 0 && <p className={`text-xs text-gray-400 italic ${justifyClass}`}>Sem relatórios disponíveis</p>}
           </div>
         </nav>
         <div className={`p-4 border-t border-gray-100 ${!sidebarOpen ? 'flex justify-center' : ''}`}>
@@ -134,7 +133,6 @@ export default function Dashboard() {
               <div className="p-3 rounded-lg bg-green-50 text-green-600 mr-4"><BarChart3 size={24} /></div><div><h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider">Conjunto de Dados</h3><p className="text-2xl font-bold text-gray-700 mt-1">102</p></div>
             </div>
             
-            {/* CARDS APENAS PARA ADMIN - AGORA SEM CLIQUE */}
             {isAdmin && (
                 <>
                     {/* Card Relatórios (Sem onClick, sem cursor-pointer, sem hover color) */}

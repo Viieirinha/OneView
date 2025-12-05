@@ -1,15 +1,19 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'sonner'; // <--- IMPORTANTE: Sistema de notificações
 import Login from './Login';
 import Dashboard from './Dashboard';
 import Administracao from './Administracao';
 import GestaoUsuarios from './GestaoUsuarios';
 import Relatorios from './Relatorios';
-import PrimeiroAcesso from './PrimeiroAcesso'; // <--- IMPORTANTE: Importar o novo ecrã
+import PrimeiroAcesso from './PrimeiroAcesso';
 import RotaProtegida from './RotaProtegida';
 
 export default function App() {
   return (
     <BrowserRouter>
+      {/* O Toaster fica aqui, disponível para todas as páginas */}
+      <Toaster richColors position="top-right" closeButton />
+      
       <Routes>
         {/* Rota Pública (Login) */}
         <Route path="/" element={<Login />} />
@@ -36,7 +40,7 @@ export default function App() {
           } 
         />
         
-        {/* Central de Administração */}
+        {/* Central de Administração (Abas) */}
         <Route 
           path="/administracao" 
           element={
