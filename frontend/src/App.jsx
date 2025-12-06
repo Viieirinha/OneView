@@ -1,25 +1,29 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'sonner'; // <--- IMPORTANTE: Sistema de notificações
+import { Toaster } from 'sonner';
 import Login from './Login';
 import Dashboard from './Dashboard';
 import Administracao from './Administracao';
 import GestaoUsuarios from './GestaoUsuarios';
 import Relatorios from './Relatorios';
 import PrimeiroAcesso from './PrimeiroAcesso';
+import EsqueciSenha from './EsqueciSenha';
+import RedefinirSenha from './RedefinirSenha';
 import RotaProtegida from './RotaProtegida';
 
 export default function App() {
   return (
     <BrowserRouter>
-      {/* O Toaster fica aqui, disponível para todas as páginas */}
+      {/* Sistema de Notificações Global */}
       <Toaster richColors position="top-right" closeButton />
       
       <Routes>
-        {/* Rota Pública (Login) */}
+        {/* --- ROTAS PÚBLICAS (Sem Login) --- */}
         <Route path="/" element={<Login />} />
+        <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+        <Route path="/redefinir-senha" element={<RedefinirSenha />} />
         
         {/* --- ROTAS PROTEGIDAS (Exigem Login) --- */}
-
+        
         {/* Dashboard Principal */}
         <Route 
           path="/dashboard" 
@@ -30,7 +34,7 @@ export default function App() {
           } 
         />
         
-        {/* Rota Obrigatória para quem tem a palavra-passe padrão */}
+        {/* Rota Obrigatória para Primeiro Acesso */}
         <Route 
           path="/primeiro-acesso" 
           element={

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, UserPlus, ArrowLeft, Users as UsersIcon, Pencil, X } from 'lucide-react';
+import { Trash2, UserPlus, ArrowLeft, Users as UsersIcon, Pencil, X, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { baseURL } from './api';
 import { toast } from 'sonner';
@@ -10,6 +10,9 @@ export default function GestaoUsuarios({ modoEmbutido }) {
   const [usuarios, setUsuarios] = useState([]);
   const [idEdicao, setIdEdicao] = useState(null);
   const [form, setForm] = useState({ nome: '', email: '', password: '', cargo: 'visitante' });
+  
+  // ESTADO DO MODAL
+  const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', action: null });
 
   const cargosDisponiveis = ['admin', 'comercial', 'financeiro', 'operacional', 'diretoria', 'visitante'];
   const authHeaders = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
@@ -19,7 +22,7 @@ export default function GestaoUsuarios({ modoEmbutido }) {
       const response = await fetch(`${baseURL}/usuarios`, { headers: authHeaders });
       if (response.ok) setUsuarios(await response.json());
     } catch (error) {
-      toast.error("Erro de conexão ao carregar usuários.");
+      toast.error("Erro de conexão ao carregar utilizadores.");
     }
   };
 
@@ -27,6 +30,17 @@ export default function GestaoUsuarios({ modoEmbutido }) {
     if (!token) navigate('/');
     buscarUsuarios();
   }, []);
+
+  // --- Lógica do Modal ---
+  const pedirConfirmacao = (titulo, mensagem, acao) => {
+    setConfirmModal({ show: true, title: titulo, message: mensagem, action: () => acao() });
+  };
+
+  const executarAcao = () => {
+    if (confirmModal.action) confirmModal.action();
+    setConfirmModal({ ...confirmModal, show: false });
+  };
+  // ----------------------
 
   const iniciarEdicao = (usuario) => {
     setIdEdicao(usuario.id);
@@ -38,52 +52,55 @@ export default function GestaoUsuarios({ modoEmbutido }) {
     setForm({ nome: '', email: '', password: '', cargo: 'visitante' });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     
-    // CONFIRMAÇÃO
-    const acao = idEdicao ? "atualizar este usuário" : "criar este novo usuário";
-    if (!window.confirm(`Tem certeza que deseja ${acao}?`)) return;
+    const acaoTexto = idEdicao ? "atualizar as informações deste utilizador" : "criar um novo utilizador";
+    const tituloTexto = idEdicao ? "Atualizar Utilizador" : "Novo Utilizador";
 
-    const url = idEdicao ? `${baseURL}/usuarios/${idEdicao}` : `${baseURL}/usuarios`;
-    const method = idEdicao ? 'PUT' : 'POST';
-    const dadosEnvio = { ...form };
-    if (idEdicao && !dadosEnvio.password) delete dadosEnvio.password;
+    // Abre o Modal antes de salvar
+    pedirConfirmacao(tituloTexto, `Tem a certeza que deseja ${acaoTexto}?`, async () => {
+        const url = idEdicao ? `${baseURL}/usuarios/${idEdicao}` : `${baseURL}/usuarios`;
+        const method = idEdicao ? 'PUT' : 'POST';
+        const dadosEnvio = { ...form };
+        if (idEdicao && !dadosEnvio.password) delete dadosEnvio.password;
 
-    try {
-      const response = await fetch(url, { method, headers: authHeaders, body: JSON.stringify(dadosEnvio) });
-      
-      if (response.ok) { 
-        cancelarEdicao(); 
-        buscarUsuarios(); 
-        toast.success(idEdicao ? "Utilizador atualizado com sucesso!" : "Utilizador criado com sucesso!");
-      } else { 
-        const data = await response.json(); 
-        toast.error(data.detail || 'Erro ao guardar utilizador');
-      }
-    } catch (error) {
-      toast.error('Erro de conexão com o servidor');
-    }
+        try {
+            const response = await fetch(url, { method, headers: authHeaders, body: JSON.stringify(dadosEnvio) });
+            
+            if (response.ok) { 
+                cancelarEdicao(); 
+                buscarUsuarios(); 
+                toast.success(idEdicao ? "Utilizador atualizado com sucesso!" : "Utilizador criado com sucesso!");
+            } else { 
+                const data = await response.json(); 
+                toast.error(data.detail || 'Erro ao guardar utilizador');
+            }
+        } catch (error) {
+            toast.error('Erro de conexão com o servidor');
+        }
+    });
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Tem a certeza que deseja excluir este utilizador?")) {
-      try {
-        const response = await fetch(`${baseURL}/usuarios/${id}`, { method: 'DELETE', headers: authHeaders });
-        if (response.ok) {
-            buscarUsuarios();
-            toast.success("Utilizador removido.");
-        } else {
-            toast.error("Não foi possível remover o utilizador.");
+  const handleDelete = (id) => {
+    // Abre o Modal antes de excluir
+    pedirConfirmacao("Excluir Utilizador", "Tem a certeza absoluta? Esta ação não pode ser desfeita.", async () => {
+        try {
+            const response = await fetch(`${baseURL}/usuarios/${id}`, { method: 'DELETE', headers: authHeaders });
+            if (response.ok) {
+                buscarUsuarios();
+                toast.success("Utilizador removido.");
+            } else {
+                toast.error("Não foi possível remover o utilizador.");
+            }
+        } catch (error) {
+            toast.error("Erro de conexão.");
         }
-      } catch (error) {
-        toast.error("Erro de conexão.");
-      }
-    }
+    });
   };
 
   return (
-    <div className={modoEmbutido ? "" : "min-h-screen bg-gray-50 p-8 font-sans text-gray-800"}>
+    <div className={modoEmbutido ? "relative" : "min-h-screen bg-gray-50 p-8 font-sans text-gray-800 relative"}>
       {!modoEmbutido && (
         <div className="max-w-4xl mx-auto mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -110,7 +127,7 @@ export default function GestaoUsuarios({ modoEmbutido }) {
             <div><label className="text-sm text-gray-600">{idEdicao ? 'Nova Palavra-passe (Opcional)' : 'Palavra-passe Temporária'}</label><input className="w-full border rounded p-2 text-sm" type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required={!idEdicao} placeholder="••••••" /></div>
             
             <div className="flex gap-2">
-              <button type="submit" className="flex-1 bg-brand-blue text-white py-2 rounded font-bold hover:bg-blue-800 transition">Guardar</button>
+              <button type="submit" className="flex-1 bg-brand-blue text-white py-2 rounded font-bold hover:bg-blue-800 transition">Salvar</button>
               {idEdicao && <button type="button" onClick={cancelarEdicao} className="px-3 bg-gray-200 rounded hover:bg-gray-300">X</button>}
             </div>
           </form>
@@ -139,6 +156,33 @@ export default function GestaoUsuarios({ modoEmbutido }) {
           </table>
         </div>
       </div>
+
+      {/* --- MODAL DE CONFIRMAÇÃO --- */}
+      {confirmModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
+            <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 animate-scaleIn">
+                <div className="flex items-center gap-3 text-brand-orange mb-4">
+                    <AlertTriangle size={28} />
+                    <h3 className="text-lg font-bold text-gray-800">{confirmModal.title}</h3>
+                </div>
+                <p className="text-gray-600 mb-6">{confirmModal.message}</p>
+                <div className="flex justify-end gap-3">
+                    <button 
+                        onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 font-medium transition"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        onClick={executarAcao}
+                        className="px-4 py-2 bg-brand-blue text-white rounded hover:bg-blue-700 font-bold transition shadow-sm"
+                    >
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 }

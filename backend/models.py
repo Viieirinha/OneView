@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text
 from database import Base
 
 class Usuario(Base):
@@ -8,7 +8,8 @@ class Usuario(Base):
     nome = Column(String)
     senha_hash = Column(String)
     cargo = Column(String)
-    primeiro_acesso = Column(Boolean, default=True) 
+    primeiro_acesso = Column(Boolean, default=True)
+    reset_token = Column(String, nullable=True)
 
 class Relatorio(Base):
     __tablename__ = "relatorios"
@@ -33,13 +34,17 @@ class Chamado(Base):
     data_criacao = Column(String)
     relatorio_id = Column(Integer, ForeignKey("relatorios.id"), nullable=True)
     tecnico = Column(String, nullable=True)
+    
+    # NOVAS COLUNAS (Anexo + Resolução)
+    nome_anexo = Column(String, nullable=True)
+    anexo_base64 = Column(Text, nullable=True)
+    
+    resolucao = Column(Text, nullable=True) # <--- NOVA COLUNA: O que foi feito
 
-# --- NOVA TABELA: LOGS DE AUDITORIA ---
 class Log(Base):
     __tablename__ = "logs"
-
     id = Column(Integer, primary_key=True, index=True)
-    usuario = Column(String)      # Quem fez a ação (email)
-    acao = Column(String)         # O que fez (ex: "Criou Usuário")
-    detalhe = Column(String)      # Detalhes (ex: "Nome: João")
-    data_hora = Column(String)    # Quando
+    usuario = Column(String)
+    acao = Column(String)
+    detalhe = Column(String)
+    data_hora = Column(String)

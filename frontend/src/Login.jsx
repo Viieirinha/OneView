@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // <--- IMPORTAR LINK
 import { baseURL } from './api';
+import { toast } from 'sonner';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -24,29 +25,30 @@ export default function Login() {
       const data = await response.json();
 
       if (data.status === "sucesso") {
-        // 1. Guarda dados básicos na memória
         localStorage.setItem('usuarioLogado', data.usuario);
         localStorage.setItem('token', data.token);
         
-        // 2. Guarda o Cargo (Importante para o Dashboard saber o que mostrar)
         const cargo = data.permissoes && data.permissoes.length > 0 ? data.permissoes[0] : 'visitante';
         localStorage.setItem('cargoUsuario', cargo); 
 
-        // 3. VERIFICAÇÃO DE PRIMEIRO ACESSO (Segurança)
+        toast.success("Login realizado com sucesso!");
+
         if (data.primeiro_acesso) {
-            // Se for a primeira vez (senha padrão), obriga a trocar
             navigate('/primeiro-acesso');
         } else {
-            // Se já trocou a senha, entra no sistema
             navigate('/dashboard');
         }
 
       } else {
-        setErro(data.mensagem || 'Erro ao tentar iniciar sessão');
+        const msgErro = data.mensagem || 'Erro ao tentar iniciar sessão';
+        setErro(msgErro);
+        toast.error(msgErro);
       }
 
     } catch (error) {
-      setErro('Erro de conexão com o servidor. Verifique se o Backend está a correr.');
+      const msgErro = 'Erro de conexão com o servidor.';
+      setErro(msgErro);
+      toast.error(msgErro);
       console.error(error);
     } finally {
       setLoading(false);
@@ -65,7 +67,7 @@ export default function Login() {
         <form className="space-y-6" onSubmit={handleLogin}>
           
           {erro && (
-            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm text-center">
+            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm text-center font-bold">
               {erro}
             </div>
           )}
@@ -99,9 +101,11 @@ export default function Login() {
               <input type="checkbox" className="form-checkbox text-brand-orange rounded" />
               <span className="ml-2 text-gray-600">Lembrar-me</span>
             </label>
-            <a href="#" className="text-brand-blue hover:text-brand-orange transition font-medium">
+            
+            {/* LINK CORRIGIDO AQUI */}
+            <Link to="/esqueci-senha" className="text-brand-blue hover:text-brand-orange transition font-medium">
               Esqueceu-se da palavra-passe?
-            </a>
+            </Link>
           </div>
 
           <button 
