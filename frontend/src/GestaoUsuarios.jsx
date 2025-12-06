@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trash2, UserPlus, ArrowLeft, Users as UsersIcon, Pencil, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { baseURL } from './api';
-import { toast } from 'sonner'; // <--- IMPORTANTE
+import { toast } from 'sonner';
 
 export default function GestaoUsuarios({ modoEmbutido }) {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ export default function GestaoUsuarios({ modoEmbutido }) {
       const response = await fetch(`${baseURL}/usuarios`, { headers: authHeaders });
       if (response.ok) setUsuarios(await response.json());
     } catch (error) {
-      toast.error("Erro de conexão ao carregar utilizadores.");
+      toast.error("Erro de conexão ao carregar usuários.");
     }
   };
 
@@ -40,6 +40,11 @@ export default function GestaoUsuarios({ modoEmbutido }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // CONFIRMAÇÃO
+    const acao = idEdicao ? "atualizar este usuário" : "criar este novo usuário";
+    if (!window.confirm(`Tem certeza que deseja ${acao}?`)) return;
+
     const url = idEdicao ? `${baseURL}/usuarios/${idEdicao}` : `${baseURL}/usuarios`;
     const method = idEdicao ? 'PUT' : 'POST';
     const dadosEnvio = { ...form };
@@ -51,7 +56,6 @@ export default function GestaoUsuarios({ modoEmbutido }) {
       if (response.ok) { 
         cancelarEdicao(); 
         buscarUsuarios(); 
-        // Notificação de Sucesso
         toast.success(idEdicao ? "Utilizador atualizado com sucesso!" : "Utilizador criado com sucesso!");
       } else { 
         const data = await response.json(); 
@@ -63,7 +67,6 @@ export default function GestaoUsuarios({ modoEmbutido }) {
   };
 
   const handleDelete = async (id) => {
-    // Mantemos o confirm nativo por ser mais seguro para ações destrutivas
     if (window.confirm("Tem a certeza que deseja excluir este utilizador?")) {
       try {
         const response = await fetch(`${baseURL}/usuarios/${id}`, { method: 'DELETE', headers: authHeaders });
